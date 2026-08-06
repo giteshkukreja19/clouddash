@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Create your CloudDash account — Cloud File Management Dashboard">
+  <title>Create Account — CloudDash</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="auth-page" data-page="register">
+
+  <!-- Toast container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Background effects -->
+  <div class="landing-bg"></div>
+  <div class="landing-glow landing-glow-1"></div>
+  <div class="landing-glow landing-glow-2"></div>
+
+  <div class="auth-container">
+
+    <div class="auth-card">
+
+      <!-- Logo -->
+      <div class="auth-logo">
+        <div class="logo-icon-sm">☁</div>
+        CloudDash
+      </div>
+
+      <h1 class="auth-title">Create your account</h1>
+      <p class="auth-subtitle">Join CloudDash and start managing your files in the cloud</p>
+
+      <!-- Error box -->
+      <div id="register-error" class="form-error hidden" style="
+        background: rgba(239,68,68,0.08);
+        border: 1px solid rgba(239,68,68,0.25);
+        border-radius: 6px;
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.5rem;
+      "></div>
+
+      <!-- Registration form -->
+      <form id="register-form" class="auth-form" novalidate>
+
+        <!-- Username -->
+        <div class="form-group">
+          <label class="form-label" for="reg-username">Username</label>
+          <div class="input-group">
+            <span class="input-icon">👤</span>
+            <input
+              type="text"
+              id="reg-username"
+              name="username"
+              class="form-input"
+              placeholder="johndoe (letters, numbers, underscores)"
+              autocomplete="username"
+              minlength="3"
+              maxlength="30"
+              required
+            >
+          </div>
+          <span class="text-xs text-muted">3–30 characters, letters/numbers/underscores only</span>
+        </div>
+
+        <!-- Email -->
+        <div class="form-group">
+          <label class="form-label" for="reg-email">Email address</label>
+          <div class="input-group">
+            <span class="input-icon">✉</span>
+            <input
+              type="email"
+              id="reg-email"
+              name="email"
+              class="form-input"
+              placeholder="john@example.com"
+              autocomplete="email"
+              required
+            >
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="form-group">
+          <label class="form-label" for="reg-password">Password</label>
+          <div class="input-group">
+            <span class="input-icon">🔒</span>
+            <input
+              type="password"
+              id="reg-password"
+              name="password"
+              class="form-input"
+              placeholder="Min 8 chars, 1 uppercase, 1 number"
+              autocomplete="new-password"
+              required
+            >
+            <span class="input-icon-right" id="toggle-reg-pw" title="Show/hide">👁</span>
+          </div>
+          <!-- Strength meter -->
+          <div class="password-strength">
+            <div class="password-strength-fill" id="pw-strength-fill"></div>
+          </div>
+          <span class="text-xs" id="pw-strength-text" style="color: var(--text-muted);"></span>
+        </div>
+
+        <!-- Confirm password -->
+        <div class="form-group">
+          <label class="form-label" for="reg-confirm">Confirm Password</label>
+          <div class="input-group">
+            <span class="input-icon">🔒</span>
+            <input
+              type="password"
+              id="reg-confirm"
+              name="confirm_password"
+              class="form-input"
+              placeholder="Re-enter your password"
+              autocomplete="new-password"
+              required
+            >
+            <span class="input-icon-right" id="toggle-reg-confirm" title="Show/hide">👁</span>
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" class="btn btn-primary btn-full" id="register-btn" style="margin-top: 0.5rem;">
+          <span id="register-spinner" class="spinner hidden" style="width:16px;height:16px;border-width:2px;"></span>
+          <span id="register-btn-text">Create Account</span>
+        </button>
+
+        <!-- Security note -->
+        <p class="text-xs text-muted" style="text-align: center; line-height: 1.5;">
+          🔐 Passwords are securely hashed. We never store plain text.
+        </p>
+
+      </form>
+
+      <!-- Footer -->
+      <div class="auth-footer">
+        Already have an account?
+        <a href="/login" style="color: var(--cyan); font-weight: 600;">Sign in →</a>
+      </div>
+
+    </div>
+
+    <!-- Back to home -->
+    <div style="text-align: center; margin-top: 1.25rem;">
+      <a href="/" class="text-sm text-muted" style="color: var(--text-muted);">← Back to home</a>
+    </div>
+
+  </div>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

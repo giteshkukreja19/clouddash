@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Sign in to CloudDash — Cloud File Management Dashboard">
+  <title>Sign In — CloudDash</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="auth-page" data-page="login">
+
+  <!-- Toast container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Background effects -->
+  <div class="landing-bg"></div>
+  <div class="landing-glow landing-glow-1"></div>
+  <div class="landing-glow landing-glow-2"></div>
+
+  <div class="auth-container">
+
+    <!-- Card -->
+    <div class="auth-card">
+
+      <!-- Logo -->
+      <div class="auth-logo">
+        <div class="logo-icon-sm">☁</div>
+        CloudDash
+      </div>
+
+      <h1 class="auth-title">Welcome back</h1>
+      <p class="auth-subtitle">Sign in to your account to continue</p>
+
+      <!-- Error box (hidden by default) -->
+      <div id="login-error" class="form-error hidden" style="
+        background: rgba(239,68,68,0.08);
+        border: 1px solid rgba(239,68,68,0.25);
+        border-radius: 6px;
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.5rem;
+      "></div>
+
+      <!-- Login form -->
+      <form id="login-form" class="auth-form" novalidate>
+
+        <!-- Username / Email -->
+        <div class="form-group">
+          <label class="form-label" for="login-username">Username or Email</label>
+          <div class="input-group">
+            <span class="input-icon">👤</span>
+            <input
+              type="text"
+              id="login-username"
+              name="username"
+              class="form-input"
+              placeholder="johndoe or john@example.com"
+              autocomplete="username"
+              required
+            >
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="form-group">
+          <div class="flex-between">
+            <label class="form-label" for="login-password">Password</label>
+          </div>
+          <div class="input-group">
+            <span class="input-icon">🔒</span>
+            <input
+              type="password"
+              id="login-password"
+              name="password"
+              class="form-input"
+              placeholder="Enter your password"
+              autocomplete="current-password"
+              required
+            >
+            <span class="input-icon-right" id="toggle-login-pw" title="Show/hide password">👁</span>
+          </div>
+        </div>
+
+        <!-- Remember me -->
+        <div class="flex gap-1" style="align-items: center;">
+          <input type="checkbox" id="login-remember" style="width:16px; height:16px; accent-color: var(--cyan);">
+          <label for="login-remember" class="text-sm text-muted" style="cursor:pointer;">Remember me for 7 days</label>
+        </div>
+
+        <!-- Submit button -->
+        <button type="submit" class="btn btn-primary btn-full" id="login-btn" style="margin-top: 0.5rem;">
+          <span id="login-spinner" class="spinner hidden" style="width:16px;height:16px;border-width:2px;"></span>
+          <span id="login-btn-text">Sign In</span>
+        </button>
+
+      </form>
+
+      <!-- Footer link -->
+      <div class="auth-footer">
+        Don't have an account?
+        <a href="/register" style="color: var(--cyan); font-weight: 600;">Create one →</a>
+      </div>
+
+    </div>
+
+    <!-- Back to home -->
+    <div style="text-align: center; margin-top: 1.25rem;">
+      <a href="/" class="text-sm text-muted" style="color: var(--text-muted);">← Back to home</a>
+    </div>
+
+  </div>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

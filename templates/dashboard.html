@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="CloudDash — Your cloud file management and monitoring dashboard">
+  <title>Dashboard — CloudDash</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body data-page="dashboard">
+
+  <!-- Toast container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Mobile sidebar overlay -->
+  <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+  <!-- ══════════════════════════════════════════
+       SIDEBAR
+  ══════════════════════════════════════════ -->
+  <aside id="sidebar" class="sidebar">
+
+    <!-- Logo -->
+    <div class="sidebar-logo">
+      <div class="logo-icon-sm">☁</div>
+      <span>CloudDash</span>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="sidebar-nav">
+
+      <div class="sidebar-section-label">Main</div>
+
+      <div class="nav-item active" data-panel="panel-overview">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">Overview</span>
+      </div>
+
+      <div class="nav-item" data-panel="panel-files">
+        <span class="nav-icon">📁</span>
+        <span class="nav-label">File Manager</span>
+      </div>
+
+      <div class="nav-item" data-panel="panel-monitor">
+        <span class="nav-icon">📊</span>
+        <span class="nav-label">Monitoring</span>
+      </div>
+
+      <div class="sidebar-section-label">Cloud</div>
+
+      <div class="nav-item" data-panel="panel-aws">
+        <span class="nav-icon">☁</span>
+        <span class="nav-label">AWS Setup</span>
+      </div>
+
+      <div class="nav-item" data-panel="panel-api">
+        <span class="nav-icon">🔌</span>
+        <span class="nav-label">API Reference</span>
+      </div>
+
+    </nav>
+
+    <!-- User section -->
+    <div class="sidebar-footer">
+      <div class="user-mini" id="logout-btn" title="Click to sign out">
+        <div class="avatar" id="sidebar-avatar">{{ user.username[0].upper() }}</div>
+        <div class="user-info">
+          <div class="user-name truncate">{{ user.username }}</div>
+          <div class="user-role">{{ user.email }}</div>
+        </div>
+        <span style="color: var(--text-muted); font-size: 0.875rem;" title="Sign out">⎋</span>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- ══════════════════════════════════════════
+       MAIN CONTENT AREA
+  ══════════════════════════════════════════ -->
+  <div class="app-main">
+
+    <!-- Top Navbar -->
+    <header class="top-navbar">
+      <div class="navbar-left">
+        <!-- Mobile menu toggle -->
+        <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Open menu">☰</button>
+        <h1 class="page-title" id="navbar-page-title">Overview</h1>
+      </div>
+
+      <!-- Search (used in file manager) -->
+      <div class="search-bar">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="file-search" placeholder="Search files…" autocomplete="off">
+      </div>
+
+      <div class="navbar-right">
+        <!-- Health indicator -->
+        <div class="navbar-btn" data-tooltip="Server health">
+          <span class="status-dot online" id="nav-health-dot"></span>
+        </div>
+        <!-- S3 status -->
+        <div id="s3-status-badge" class="badge badge-warning" style="font-size: 0.65rem;">
+          ⚠ S3 Not Configured
+        </div>
+        <!-- User avatar -->
+        <div class="avatar" style="cursor:default;">{{ user.username[0].upper() }}</div>
+      </div>
+    </header>
+
+    <!-- ── Content panels ── -->
+    <main class="content-area">
+
+      <!-- ════════════════════════════════════
+           PANEL: OVERVIEW
+      ════════════════════════════════════ -->
+      <section id="panel-overview" class="content-panel active">
+
+        <div class="section-header">
+          <div class="section-title">Dashboard Overview</div>
+          <div class="section-sub">Real-time stats for your cloud storage</div>
+        </div>
+
+        <!-- Stat cards row -->
+        <div class="stats-grid">
+
+          <div class="stat-card">
+            <div class="stat-icon cyan">📁</div>
+            <div class="stat-info">
+              <div class="stat-label">Total Files</div>
+              <div class="stat-value" id="stat-total-files">—</div>
+              <div class="stat-sub">All your uploaded files</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon purple">💾</div>
+            <div class="stat-info">
+              <div class="stat-label">Storage Used</div>
+              <div class="stat-value" id="stat-storage-used">—</div>
+              <div class="stat-sub">Across all files</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon green">⬆</div>
+            <div class="stat-info">
+              <div class="stat-label">Uploads Today</div>
+              <div class="stat-value" id="stat-uploads-today">—</div>
+              <div class="stat-sub">Last 24 hours</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon orange">⚡</div>
+            <div class="stat-info">
+              <div class="stat-label">Server Status</div>
+              <div class="stat-value" id="stat-server-status" style="font-size: 1.25rem;">—</div>
+              <div class="stat-sub">Application health</div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Two-column grid: Recent files + Status -->
+        <div class="dashboard-grid">
+
+          <!-- Recent files table -->
+          <div class="card" style="grid-column: 1 / -1;">
+            <div class="card-header">
+              <div class="card-title">📋 Recent Files</div>
+              <button class="btn btn-ghost btn-sm" onclick="switchPanel('panel-files')">
+                View all →
+              </button>
+            </div>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>File Name</th>
+                    <th>Type</th>
+                    <th>Size</th>
+                    <th>Uploaded</th>
+                    <th>Storage</th>
+                  </tr>
+                </thead>
+                <tbody id="recent-files-tbody">
+                  <tr><td colspan="5">
+                    <div class="loading-overlay"><div class="spinner"></div> Loading…</div>
+                  </td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Service status tiles -->
+        <div class="section-header">
+          <div class="section-title">Service Status</div>
+        </div>
+
+        <div class="status-grid">
+
+          <div class="status-item" id="status-server">
+            <span class="status-dot online"></span>
+            <div class="status-item-info">
+              <div class="status-item-label">Flask Application</div>
+              <div class="status-item-value" id="status-uptime">Loading…</div>
+            </div>
+          </div>
+
+          <div class="status-item" id="status-database">
+            <span class="status-dot online"></span>
+            <div class="status-item-info">
+              <div class="status-item-label">Database (SQLite)</div>
+              <div class="status-item-value">Connected</div>
+            </div>
+          </div>
+
+          <div class="status-item" id="status-s3">
+            <span class="status-dot warning"></span>
+            <div class="status-item-info">
+              <div class="status-item-label">AWS S3 Bucket</div>
+              <div class="status-item-value">Not Configured</div>
+            </div>
+          </div>
+
+          <div class="status-item">
+            <span class="status-dot online"></span>
+            <div class="status-item-info">
+              <div class="status-item-label">API Endpoints</div>
+              <div class="status-item-value">All healthy</div>
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- ════════════════════════════════════
+           PANEL: FILE MANAGER
+      ════════════════════════════════════ -->
+      <section id="panel-files" class="content-panel">
+
+        <div class="section-header flex-between">
+          <div>
+            <div class="section-title">📁 File Manager</div>
+            <div class="section-sub">
+              <span id="files-count">0 files</span>
+              &nbsp;·&nbsp;
+              <span id="files-storage">0 B</span> used
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group upload-destination">
+          <label class="form-label" for="storage-destination">Save uploaded files to</label>
+          <select class="form-input" id="storage-destination" aria-describedby="storage-destination-help">
+            <option value="local" {% if not s3_configured %}selected{% endif %}>This computer (Local)</option>
+            <option value="s3" {% if s3_configured %}selected{% else %}disabled{% endif %}>Amazon S3 (Cloud){% if not s3_configured %} — not configured{% endif %}</option>
+          </select>
+          <div class="text-xs text-muted" id="storage-destination-help">
+            Choose where files selected below will be stored.
+          </div>
+        </div>
+
+        <!-- Upload zone -->
+        <div id="upload-zone" class="upload-zone" style="margin-bottom: 1.5rem;">
+          <span class="upload-icon">☁</span>
+          <div class="upload-title">Drag & drop files here</div>
+          <div class="upload-sub">or click to browse your computer</div>
+          <button type="button" class="btn btn-outline" id="browse-btn" onclick="event.stopPropagation()">
+            Choose Files
+          </button>
+          <div class="upload-limits">
+            Max 50 MB per file &nbsp;·&nbsp; Supported: Images, PDF, Text, CSV, ZIP, Code files
+          </div>
+          <input type="file" id="file-input" multiple accept="image/*,.pdf,.txt,.md,.csv,.json,.xml,.zip,.tar,.gz,.py,.js,.html,.css,.docx,.xlsx,.pptx">
+        </div>
+
+        <!-- Upload progress list -->
+        <div id="upload-list" style="margin-bottom: 1rem;"></div>
+
+        <!-- Files table -->
+        <div class="card" style="padding: 0;">
+          <div class="card-header" style="padding: 1.25rem 1.5rem 1rem;">
+            <div class="card-title">All Files</div>
+            <button class="btn btn-ghost btn-sm" onclick="loadFiles()">↻ Refresh</button>
+          </div>
+          <div class="table-wrapper" style="border: none; border-radius: 0 0 var(--radius-lg) var(--radius-lg);">
+            <table>
+              <thead>
+                <tr>
+                  <th>File Name</th>
+                  <th>Type</th>
+                  <th>Size</th>
+                  <th>Uploaded</th>
+                  <th>Storage</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="files-tbody">
+                <tr><td colspan="6">
+                  <div class="loading-overlay"><div class="spinner"></div> Loading files…</div>
+                </td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ════════════════════════════════════
+           PANEL: MONITORING
+      ════════════════════════════════════ -->
+      <section id="panel-monitor" class="content-panel">
+
+        <div class="section-header flex-between">
+          <div>
+            <div class="section-title">📊 Server Monitoring</div>
+            <div class="section-sub">Live metrics — auto-refreshes every 5 seconds</div>
+          </div>
+          <span class="badge badge-success" style="font-size: 0.7rem;">● Live</span>
+        </div>
+
+        <!-- Server resource metrics -->
+        <div class="monitoring-grid">
+
+          <!-- CPU -->
+          <div class="metric-card">
+            <div class="metric-header">
+              <div class="metric-label">⚡ CPU Usage</div>
+              <span class="badge badge-info text-xs">psutil</span>
+            </div>
+            <div class="metric-value" id="metric-cpu-val">—</div>
+            <div class="progress-bar">
+              <div class="progress-fill cyan" id="progress-cpu" style="width: 0%"></div>
+            </div>
+            <div class="metric-sub" id="metric-cpu-count">Loading…</div>
+          </div>
+
+          <!-- Memory -->
+          <div class="metric-card">
+            <div class="metric-header">
+              <div class="metric-label">🧠 Memory (RAM)</div>
+              <span class="badge badge-info text-xs">psutil</span>
+            </div>
+            <div class="metric-value" id="metric-mem-val">—</div>
+            <div class="progress-bar">
+              <div class="progress-fill green" id="progress-mem" style="width: 0%"></div>
+            </div>
+            <div class="metric-sub" id="metric-mem-sub">Loading…</div>
+          </div>
+
+          <!-- Disk -->
+          <div class="metric-card">
+            <div class="metric-header">
+              <div class="metric-label">💾 Disk Usage</div>
+              <span class="badge badge-info text-xs">psutil</span>
+            </div>
+            <div class="metric-value" id="metric-disk-val">—</div>
+            <div class="progress-bar">
+              <div class="progress-fill orange" id="progress-disk" style="width: 0%"></div>
+            </div>
+            <div class="metric-sub" id="metric-disk-sub">Loading…</div>
+          </div>
+
+          <!-- Uptime -->
+          <div class="metric-card">
+            <div class="metric-header">
+              <div class="metric-label">⏱ System Uptime</div>
+            </div>
+            <div class="metric-value" id="metric-uptime-val" style="font-size: 1.25rem; line-height: 1.4;">—</div>
+            <div class="metric-sub">
+              Processes: <strong id="metric-processes">—</strong> &nbsp;·&nbsp;
+              <span id="metric-platform">—</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Network stats -->
+        <div class="card" style="margin-bottom: 1.25rem;">
+          <div class="card-header">
+            <div class="card-title">🌐 Network I/O</div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+            <div>
+              <div class="stat-label">Bytes Sent (since boot)</div>
+              <div class="stat-value text-cyan" id="metric-net-sent">—</div>
+            </div>
+            <div>
+              <div class="stat-label">Bytes Received (since boot)</div>
+              <div class="stat-value text-green" id="metric-net-recv">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Two-column: App + Database -->
+        <div class="dashboard-grid">
+
+          <!-- Application metrics -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">🐍 Application</div>
+              <span class="badge badge-success">Flask</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 0.875rem;">
+              <div class="flex-between">
+                <span class="text-sm text-muted">App Uptime</span>
+                <span class="text-sm font-semibold" id="metric-app-uptime">—</span>
+              </div>
+              <div class="divider" style="margin: 0;"></div>
+              <div class="flex-between">
+                <span class="text-sm text-muted">Environment</span>
+                <span class="badge badge-purple" id="metric-environment">—</span>
+              </div>
+              <div class="divider" style="margin: 0;"></div>
+              <div class="flex-between">
+                <span class="text-sm text-muted">Health Check</span>
+                <a href="/api/health" target="_blank" class="badge badge-success" style="text-decoration:none; cursor:pointer;">/api/health ↗</a>
+              </div>
+              <div class="divider" style="margin: 0;"></div>
+              <div class="flex-between">
+                <span class="text-sm text-muted">Metrics API</span>
+                <a href="/api/metrics" target="_blank" class="badge badge-info" style="text-decoration:none; cursor:pointer;">/api/metrics ↗</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Database stats -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">🗄 Database</div>
+              <span class="badge badge-success" id="metric-db-status">Connected</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 0.875rem;">
+              <div class="flex-between">
+                <span class="text-sm text-muted">Total Users</span>
+                <span class="text-sm font-semibold" id="metric-db-users">—</span>
+              </div>
+              <div class="divider" style="margin: 0;"></div>
+              <div class="flex-between">
+                <span class="text-sm text-muted">Total Files</span>
+                <span class="text-sm font-semibold" id="metric-db-files">—</span>
+              </div>
+              <div class="divider" style="margin: 0;"></div>
+              <div class="flex-between">
+                <span class="text-sm text-muted">Storage Used</span>
+                <span class="text-sm font-semibold" id="metric-db-storage">—</span>
+              </div>
+              <div class="divider" style="margin: 0;"></div>
+              <div class="flex-between">
+                <span class="text-sm text-muted">Uploads (24h)</span>
+                <span class="text-sm font-semibold" id="metric-db-recent">—</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- AWS status -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">☁ AWS S3 Status</div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+            <div>
+              <div class="stat-label">S3 Bucket</div>
+              <div class="text-sm font-semibold mt-1" id="metric-s3-status">—</div>
+            </div>
+            <div>
+              <div class="stat-label">Region</div>
+              <div class="text-sm font-semibold mt-1" id="metric-s3-region">—</div>
+            </div>
+          </div>
+          <div class="divider"></div>
+          <div class="code-block" style="font-size: 0.75rem; line-height: 1.8;">
+# To configure S3, set these in .env:<br>
+S3_BUCKET_NAME=your-bucket-name<br>
+AWS_ACCESS_KEY_ID=your-access-key<br>
+AWS_SECRET_ACCESS_KEY=your-secret-key<br>
+AWS_REGION=us-east-1<br>
+<br>
+# On EC2, use an IAM Instance Role instead (no keys needed!)
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ════════════════════════════════════
+           PANEL: AWS SETUP GUIDE
+      ════════════════════════════════════ -->
+      <section id="panel-aws" class="content-panel">
+
+        <div class="section-header">
+          <div class="section-title">☁ AWS Configuration Guide</div>
+          <div class="section-sub">Step-by-step instructions to connect your S3 bucket</div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+
+          <!-- Step 1 -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><span class="badge badge-info">Step 1</span> &nbsp; Create an S3 Bucket</div>
+            </div>
+            <ol style="padding-left: 1.25rem; display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">
+              <li>Go to <strong>AWS Console → S3 → Create Bucket</strong></li>
+              <li>Enter a globally unique bucket name (e.g. <code>myname-cloud-dashboard-2024</code>)</li>
+              <li>Choose the region closest to you (e.g. <code>us-east-1</code>)</li>
+              <li>For public files: uncheck <em>Block all public access</em> and add a bucket policy</li>
+              <li>For private files (recommended): keep Block Public Access ON, use pre-signed URLs</li>
+            </ol>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><span class="badge badge-info">Step 2</span> &nbsp; Create an IAM User</div>
+            </div>
+            <ol style="padding-left: 1.25rem; display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">
+              <li>Go to <strong>AWS Console → IAM → Users → Create User</strong></li>
+              <li>Username: <code>cloud-dashboard-app</code></li>
+              <li>Permissions: Attach the policy below (least privilege)</li>
+              <li>Create Access Key → Download CSV</li>
+            </ol>
+            <div class="code-block" style="margin-top: 1rem; font-size: 0.75rem; line-height: 1.8;">
+{<br>
+&nbsp;&nbsp;"Version": "2012-10-17",<br>
+&nbsp;&nbsp;"Statement": [{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"Effect": "Allow",<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"Action": [<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"s3:PutObject",<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"s3:GetObject",<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"s3:DeleteObject",<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"s3:ListBucket"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"Resource": [<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"arn:aws:s3:::YOUR-BUCKET-NAME",<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"arn:aws:s3:::YOUR-BUCKET-NAME/*"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;}]<br>
+}
+            </div>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><span class="badge badge-info">Step 3</span> &nbsp; Configure Environment Variables</div>
+            </div>
+            <div class="code-block" style="font-size: 0.8125rem; line-height: 2;">
+# Edit your .env file:<br>
+AWS_ACCESS_KEY_ID=AKIA...<br>
+AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI...<br>
+AWS_REGION=us-east-1<br>
+S3_BUCKET_NAME=myname-cloud-dashboard-2024<br>
+<br>
+# Restart Flask after changing .env<br>
+python app.py
+            </div>
+          </div>
+
+          <!-- Step 4 EC2 -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><span class="badge badge-success">Production</span> &nbsp; EC2 IAM Instance Role (Best Practice)</div>
+            </div>
+            <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.875rem;">
+              On EC2, never use Access Keys. Attach an IAM Role to the instance instead — boto3 auto-detects it.
+            </p>
+            <ol style="padding-left: 1.25rem; display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">
+              <li>IAM → Roles → Create Role → EC2</li>
+              <li>Attach the same S3 policy as above</li>
+              <li>EC2 → Instances → Actions → Security → Modify IAM Role</li>
+              <li>Select the role — no keys needed in your .env file!</li>
+            </ol>
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- ════════════════════════════════════
+           PANEL: API REFERENCE
+      ════════════════════════════════════ -->
+      <section id="panel-api" class="content-panel">
+
+        <div class="section-header">
+          <div class="section-title">🔌 REST API Reference</div>
+          <div class="section-sub">All endpoints return JSON. Auth endpoints use session cookies.</div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 0.875rem;">
+
+          {% set endpoints = [
+            ('POST', '/api/register', 'Create a new user account', 'badge-purple'),
+            ('POST', '/api/login',    'Authenticate and start session', 'badge-purple'),
+            ('POST', '/api/logout',   'End the current session', 'badge-purple'),
+            ('GET',  '/api/me',       'Get current user profile', 'badge-info'),
+            ('POST', '/api/upload',   'Upload a file (multipart/form-data)', 'badge-success'),
+            ('GET',  '/api/files',    'List all files (?search=&limit=&offset=)', 'badge-info'),
+            ('GET',  '/api/files/<id>', 'Get single file metadata', 'badge-info'),
+            ('GET',  '/api/files/<id>/download', 'Download a file (redirect to S3 or local)', 'badge-info'),
+            ('DELETE', '/api/files/<id>', 'Delete a file', 'badge-danger'),
+            ('GET',  '/api/health',   'Health check (no auth required)', 'badge-success'),
+            ('GET',  '/api/metrics',  'Full server metrics (auth required)', 'badge-success'),
+          ] %}
+
+          {% for method, path, desc, badge_class in endpoints %}
+          <div class="card" style="padding: 1rem 1.25rem;">
+            <div style="display: flex; align-items: center; gap: 0.875rem; flex-wrap: wrap;">
+              <span class="badge {{ badge_class }}" style="font-size: 0.7rem; min-width: 60px; justify-content: center;">
+                {{ method }}
+              </span>
+              <code class="font-mono" style="color: var(--cyan); font-size: 0.875rem;">{{ path }}</code>
+              <span class="text-sm text-muted">{{ desc }}</span>
+            </div>
+          </div>
+          {% endfor %}
+
+          <!-- Example response -->
+          <div class="card" style="margin-top: 0.5rem;">
+            <div class="card-header">
+              <div class="card-title">Example: GET /api/metrics</div>
+              <a href="/api/metrics" target="_blank" class="btn btn-ghost btn-sm">Try it ↗</a>
+            </div>
+            <div class="code-block" style="font-size: 0.75rem; line-height: 1.8;">
+{<br>
+&nbsp;&nbsp;"server": {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"cpu_percent": 12.5,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"memory_percent": 45.2,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"disk_percent": 30.1,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"uptime_human": "2 hours, 15 minutes"<br>
+&nbsp;&nbsp;},<br>
+&nbsp;&nbsp;"application": { "uptime_human": "45 minutes" },<br>
+&nbsp;&nbsp;"database": { "total_files": 12, "storage_human": "24.3 MB" },<br>
+&nbsp;&nbsp;"aws": { "s3_configured": false, "region": "us-east-1" }<br>
+}
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+    </main>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
